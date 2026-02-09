@@ -11,18 +11,35 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Rust Android toolchain
-      uses: rust-android-actions/setup-android-toolchain@v1.3.1
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
       with:
-        ndk-version: 'r26d'
-        target: "aarch64-linux-android"
+        targets: "aarch64-linux-android"
+
+    - name: Set up Android NDK manually
+      run: |
+        # Download and unzip the NDK directly from Google
+        wget https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
+        unzip -q android-ndk-r26d-linux.zip
+        # Set an environment variable for the NDK path to use in later steps
+        echo "NDK_PATH=$GITHUB_WORKSPACE/android-ndk-r26d" >> $GITHUB_ENV
+
+    - name: Configure Cargo for Android
+      run: |
+        # This step is similar to what we did before, but now it uses the NDK_PATH env var
+        mkdir -p .cargo
+        cat > .cargo/config.toml << EOF
+        [target.aarch64-linux-android]
+        ar = "${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar"
+        linker = "${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang"
+        EOF
 
     - name: Build `ty` binary
-      # Use --package to specify we only want to build the 'ty' crate
+      # The build command remains the same
       run: cargo build --release --package ty --target aarch64-linux-android
 
     - name: Upload `ty` binary
       uses: actions/upload-artifact@v4
       with:
         name: ty-android-binary
-        path: target/aarch64-linux-android/release/ty # The path to the compiled `ty` binary
+        path: target/aarch64-linux-android/release/ty
