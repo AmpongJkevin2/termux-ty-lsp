@@ -11,26 +11,12 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Android NDK
-      id: setup-ndk
-      uses: nanasess/setup-ndk@v1
+    - name: Set up Rust Android toolchain
+      uses: rust-android-actions/setup-android-toolchain@v1.3.1
       with:
         ndk-version: 'r26d'
+        target: "aarch64-linux-android"
 
-    - name: Set up Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: "aarch64-linux-android"
-
-    - name: Configure Cargo for Android
-      run: |
-        mkdir -p .cargo
-        cat > .cargo/config.toml << EOF
-        [target.aarch64-linux-android]
-        ar = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar"
-        linker = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang"
-        EOF
-    
     - name: Build `ty` binary
       # Use --package to specify we only want to build the 'ty' crate
       run: cargo build --release --package ty --target aarch64-linux-android
