@@ -21,7 +21,8 @@ jobs:
             -v "$GITHUB_WORKSPACE:/data" \
             -w /data \
             termux/termux-docker:aarch64 \
-            bash -c "
+            /bin/sh -c "
+              . /etc/profile && \
               pkg update -y && \
               pkg install -y rust && \
               cargo build --release --package ty
