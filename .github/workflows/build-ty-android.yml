@@ -1,10 +1,10 @@
-name: Build `ty` for Android
+name: Build Test Executable
 
 on:
-  workflow_dispatch: # Allows you to run this workflow manually
+  workflow_dispatch:
 
 jobs:
-  build-ty-for-android:
+  build-hello-for-android:
     runs-on: ubuntu-latest
 
     steps:
@@ -12,41 +12,25 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Set up Rust manually
+      # We keep this step to ensure the environment is as identical as possible to the failing `ty` build.
       run: |
-        # Install rustup and the stable toolchain
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-        # Add the cargo bin directory to the GitHub Actions path
         echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-        # Install the Android target components
         rustup target add aarch64-linux-android
 
     - name: Set up Android NDK manually
       run: |
-        # Download and unzip the NDK directly from Google
         wget https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
         unzip -q android-ndk-r26d-linux.zip
-        # Set an environment variable for the NDK path to use in later steps
         echo "NDK_PATH=$GITHUB_WORKSPACE/android-ndk-r26d" >> $GITHUB_ENV
 
-    - name: Configure Cargo and Compilers
+    - name: Build 'hello.c'
       run: |
-        # Export environment variables that C-compiling build scripts will use
-        echo "CC_aarch64-linux-android=${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang" >> $GITHUB_ENV
-        echo "AR_aarch64-linux-android=${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar" >> $GITHUB_ENV
-        
-        # Create the cargo config file to tell it about the linker
-        mkdir -p .cargo
-        cat > .cargo/config.toml << EOF
-        [target.aarch64-linux-android]
-        ar = "${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/llvm-ar"
-        linker = "${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang"
-        EOF
+        # Use the clang from the NDK to compile hello.c into an executable named 'hello'
+        ${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang hello.c -o hello
 
-    - name: Build `ty` binary
-      run: cargo build --release --package ty --target aarch64-linux-android
-
-    - name: Upload `ty` binary
+    - name: Upload 'hello' binary
       uses: actions/upload-artifact@v4
       with:
-        name: ty-android-binary
-        path: target/aarch64-linux-android/release/ty
+        name: hello-android-binary
+        path: ./hello
