@@ -1,7 +1,6 @@
 #include <stdio.h>
 
 int main() {
-    printf("Hello from the NDK!
-");
+    printf("Hello from NDK");
     return 0;
 }
