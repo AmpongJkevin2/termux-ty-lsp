@@ -1,36 +1,37 @@
-name: Build Test Executable
+name: Build ty for Termux (Native)
 
 on:
   workflow_dispatch:
 
 jobs:
-  build-hello-for-android:
+  build-ty-for-termux:
     runs-on: ubuntu-latest
+    
+    container:
+      image: termux/termux-docker:aarch64
+      options: --user root # Run as root to install packages and fix permissions
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Install Dependencies
+        run: |
+          # Update repositories and install needed packages
+          pkg update -y
+          pkg install -y git rust
+      
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          # Checkout to a specific path inside the container
+          path: ./source
 
-    - name: Set up Rust manually
-      # We keep this step to ensure the environment is as identical as possible to the failing `ty` build.
-      run: |
-        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
-        rustup target add aarch64-linux-android
+      - name: Build ty
+        run: |
+          # Navigate into the source directory and build
+          cd ./source
+          cargo build --release --package ty
 
-    - name: Set up Android NDK manually
-      run: |
-        wget https://dl.google.com/android/repository/android-ndk-r26d-linux.zip
-        unzip -q android-ndk-r26d-linux.zip
-        echo "NDK_PATH=$GITHUB_WORKSPACE/android-ndk-r26d" >> $GITHUB_ENV
-
-    - name: Build 'hello.c'
-      run: |
-        # Use the clang from the NDK to compile hello.c into an executable named 'hello'
-        ${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang hello.c -o hello
-
-    - name: Upload 'hello' binary
-      uses: actions/upload-artifact@v4
-      with:
-        name: hello-android-binary
-        path: ./hello
+      - name: Upload `ty` binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: ty-termux-binary
+          path: ./source/target/release/ty
