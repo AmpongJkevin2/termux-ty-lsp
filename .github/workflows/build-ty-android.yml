@@ -28,8 +28,13 @@ jobs:
         # Set an environment variable for the NDK path to use in later steps
         echo "NDK_PATH=$GITHUB_WORKSPACE/android-ndk-r26d" >> $GITHUB_ENV
 
-    - name: Configure Cargo for Android
+    - name: Configure Cargo and Compilers
       run: |
+        # Export environment variables that C-compiling build scripts will use
+        echo "CC_aarch64-linux-android=${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang" >> $GITHUB_ENV
+        echo "AR_aarch64-linux-android=${{ env.NDK_PATH }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar" >> $GITHUB_ENV
+        
+        # Create the cargo config file to tell it about the linker
         mkdir -p .cargo
         cat > .cargo/config.toml << EOF
         [target.aarch64-linux-android]
