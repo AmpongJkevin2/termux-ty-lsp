@@ -20,9 +20,9 @@ jobs:
             --rm \
             -v "$GITHUB_WORKSPACE:/data" \
             -w /data \
+            --entrypoint /data/data/com.termux/files/usr/bin/sh \
             termux/termux-docker:aarch64 \
-            /bin/sh -c "
-              . /etc/profile && \
+            -c "
               pkg update -y && \
               pkg install -y rust && \
               cargo build --release --package ty
