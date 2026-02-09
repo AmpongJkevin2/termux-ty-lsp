@@ -13,7 +13,7 @@ jobs:
 
     - name: Set up Android NDK
       id: setup-ndk
-      uses: nanasess/setup-ndk@v2
+      uses: nanasess/setup-ndk@v1
       with:
         ndk-version: 'r26d'
 
