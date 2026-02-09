@@ -1,0 +1,42 @@
+name: Build `ty` for Android
+
+on:
+  workflow_dispatch: # Allows you to run this workflow manually
+
+jobs:
+  build-ty-for-android:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Android NDK
+      id: setup-ndk
+      uses: nanasess/setup-ndk@v2
+      with:
+        ndk-version: 'r26d'
+
+    - name: Set up Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: "aarch64-linux-android"
+
+    - name: Configure Cargo for Android
+      run: |
+        mkdir -p .cargo
+        cat > .cargo/config.toml << EOF
+        [target.aarch64-linux-android]
+        ar = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android-ar"
+        linker = "${{ steps.setup-ndk.outputs.ndk-path }}/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android34-clang"
+        EOF
+    
+    - name: Build `ty` binary
+      # Use --package to specify we only want to build the 'ty' crate
+      run: cargo build --release --package ty --target aarch64-linux-android
+
+    - name: Upload `ty` binary
+      uses: actions/upload-artifact@v4
+      with:
+        name: ty-android-binary
+        path: target/aarch64-linux-android/release/ty # The path to the compiled `ty` binary
