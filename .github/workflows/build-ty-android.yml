@@ -11,10 +11,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Rust
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        targets: "aarch64-linux-android"
+    - name: Set up Rust manually
+      run: |
+        # Install rustup and the stable toolchain
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+        # Add the cargo bin directory to the GitHub Actions path
+        echo "$HOME/.cargo/bin" >> $GITHUB_PATH
+        # Install the Android target components
+        rustup target add aarch64-linux-android
 
     - name: Set up Android NDK manually
       run: |
@@ -26,7 +30,6 @@ jobs:
 
     - name: Configure Cargo for Android
       run: |
-        # This step is similar to what we did before, but now it uses the NDK_PATH env var
         mkdir -p .cargo
         cat > .cargo/config.toml << EOF
         [target.aarch64-linux-android]
@@ -35,7 +38,6 @@ jobs:
         EOF
 
     - name: Build `ty` binary
-      # The build command remains the same
       run: cargo build --release --package ty --target aarch64-linux-android
 
     - name: Upload `ty` binary
